@@ -25,7 +25,6 @@ The NetBird Connection Monitor continuously monitors the number of connected pee
 ## Installation
 
 ### Option 1: Debian Package (Recommended)
-
 ```bash
 # Install package
 sudo dpkg -i netbird-monitor-1.0.deb
@@ -35,7 +34,6 @@ sudo apt-get install -f
 ```
 
 ### Option 2: Manual Installation
-
 ```bash
 # Clone repository
 git clone https://github.com/username/netbird-monitor.git
@@ -46,7 +44,6 @@ sudo ./install.sh
 ```
 
 ## Files and Components
-
 ### Monitor Script
 ```bash
 /usr/local/bin/netbird-monitor.sh
@@ -69,11 +66,8 @@ sudo ./install.sh
 ```
 
 ## Configuration
-
 ### Adjust Threshold
-
 Edit the monitor script to change the minimum peer threshold:
-
 ```bash
 sudo nano /usr/local/bin/netbird-monitor.sh
 
@@ -82,9 +76,7 @@ MIN_PEERS=3  # Set to desired value
 ```
 
 ### Adjust Check Interval
-
 Edit the systemd timer:
-
 ```bash
 sudo nano /etc/systemd/system/netbird-monitor.timer
 
@@ -98,16 +90,13 @@ OnUnitActiveSec=5min
 ```
 
 After changes, reload systemd:
-
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl restart netbird-monitor.timer
 ```
 
 ## Usage
-
 ### Check Service Status
-
 ```bash
 # Timer status
 systemctl status netbird-monitor.timer
@@ -120,7 +109,6 @@ journalctl -u netbird-monitor.service -n 20
 ```
 
 ### View Logs
-
 ```bash
 # Follow live log
 tail -f /var/log/netbird-monitor.log
@@ -133,7 +121,6 @@ ls -la /var/log/netbird-monitor*
 ```
 
 ### Manual Test
-
 ```bash
 # Run script manually
 sudo /usr/local/bin/netbird-monitor.sh
@@ -143,7 +130,6 @@ netbird status
 ```
 
 ### Service Management
-
 ```bash
 # Start timer
 sudo systemctl start netbird-monitor.timer
@@ -159,7 +145,6 @@ sudo systemctl disable netbird-monitor.timer
 ```
 
 ## Log Format
-
 The system logs all activities in the following format:
 
 ```
@@ -170,16 +155,13 @@ The system logs all activities in the following format:
 ```
 
 When issues occur:
-
 ```
 2025-08-17 10:35:15 - WARNING: Only 2 peers connected (minimum: 3). Restarting NetBird...
 2025-08-17 10:35:18 - INFO: NetBird successfully restarted
 ```
 
 ## Troubleshooting
-
 ### Common Issues
-
 #### Timer not running
 ```bash
 # Check timer status
@@ -219,7 +201,6 @@ sudo chmod 644 /var/log/netbird-monitor.log
 ```
 
 ### Debug Mode
-
 For detailed troubleshooting, run the script with debug output:
 
 ```bash
@@ -228,7 +209,6 @@ sudo bash -x /usr/local/bin/netbird-monitor.sh
 ```
 
 ### Test Logrotate
-
 ```bash
 # Test logrotate configuration
 sudo logrotate -d /etc/logrotate.d/netbird-monitor
@@ -238,7 +218,6 @@ sudo logrotate -f /etc/logrotate.d/netbird-monitor
 ```
 
 ## Uninstallation
-
 ### Remove Debian Package
 ```bash
 sudo dpkg -r netbird-monitor
@@ -264,9 +243,7 @@ sudo rm /var/log/netbird-monitor*
 ```
 
 ## Development
-
 ### Building Package
-
 ```bash
 # Prepare package structure
 mkdir -p netbird-monitor-1.0/{DEBIAN,usr/local/bin,etc/systemd/system,etc/logrotate.d}
@@ -282,19 +259,15 @@ dpkg-deb --build netbird-monitor-1.0
 ```
 
 ## Contributing
-
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
-
 This project is licensed under the GNU General Public License v3.0 - see the LICENSE file for details.
 
 ## Why GPL v3?
-
 This project uses GPL v3 to ensure that any improvements or modifications to this monitoring script remain open source and benefit the entire community. This aligns with the open source philosophy of NetBird and promotes collaborative development.
 
 ## Disclaimer
-
 **DISCLAIMER OF WARRANTY AND LIMITATION OF LIABILITY**
 
 This software is provided "as is" without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
@@ -302,7 +275,6 @@ This software is provided "as is" without warranty of any kind, express or impli
 Use this software at your own risk. The authors are not responsible for any damage or data loss that may occur from using this software.
 
 ## Support
-
 For issues and questions:
 
 - Create an issue on GitHub
@@ -312,7 +284,6 @@ For issues and questions:
 Note: This is an unofficial monitoring script and is not affiliated with or endorsed by NetBird.
 
 ## Changelog
-
 ### Version 1.0
 - Initial release
 - Basic NetBird monitoring
