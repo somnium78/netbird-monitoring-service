@@ -1,0 +1,15 @@
+# /etc/logrotate.d/netbird-monitor
+/var/log/netbird-monitor.log {
+    daily
+    rotate 30
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 root root
+    postrotate
+        # Optional: Signal an running processes if needed
+        /bin/systemctl reload-or-restart rsyslog > /dev/null 2>&1 || true
+    endscript
+}
+

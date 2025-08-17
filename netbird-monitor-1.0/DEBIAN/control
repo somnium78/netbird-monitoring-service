@@ -1,0 +1,10 @@
+Package: netbird-monitor
+Version: 1.0
+Section: admin
+Priority: optional
+Architecture: all
+Depends: systemd
+Maintainer: Marc Risse <risse@risse-it.de>
+Description: NetBird connection monitor service
+ Monitors NetBird peer connections and automatically restarts
+ the service when fewer than 3 peers are connected.
