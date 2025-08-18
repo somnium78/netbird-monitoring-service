@@ -7,6 +7,8 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/netbird-monitor.sh
+Environment="MIN_PEERS=3"
+Environment="STATUS_TIMEOUT=10"
 User=root
 StandardOutput=journal
 StandardError=journal
