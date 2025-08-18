@@ -27,7 +27,7 @@ The NetBird Connection Monitor continuously monitors the number of connected pee
 ### Option 1: Debian Package (Recommended)
 ```bash
 # Install package
-sudo dpkg -i netbird-monitor-1.0.deb
+sudo dpkg -i netbird-monitor_1.0-2_all.deb
 
 # Fix missing dependencies if needed
 sudo apt-get install -f
@@ -65,35 +65,65 @@ sudo ./install.sh
 /var/log/netbird-monitor.log
 ```
 
+
 ## Configuration
 ### Adjust Threshold
-Edit the monitor script to change the minimum peer threshold:
-```bash
-sudo nano /usr/local/bin/netbird-monitor.sh
 
-# Change line:
-MIN_PEERS=3  # Set to desired value
+You can configure the minimum peer threshold using environment variables in the systemd service:
+
+```bash
+# Edit the service configuration
+sudo systemctl edit netbird-monitor.service
+
+# Add or modify the environment variables:
+[Service]
+Environment=&quot;MIN_PEERS=5&quot;
+Environment=&quot;STATUS_TIMEOUT=15&quot;
 ```
 
+Available environment variables:
+- MIN_PEERS: Minimum number of connected peers (default: 3)
+- STATUS_TIMEOUT: Timeout for netbird status command in seconds (default: 10)
+
 ### Adjust Check Interval
-Edit the systemd timer:
+
+Edit the systemd timer to change monitoring frequency:
 ```bash
 sudo nano /etc/systemd/system/netbird-monitor.timer
-
-# For 15-minute interval:
+```
+For 15-minute interval (default):
+```
 OnBootSec=15min
 OnUnitActiveSec=15min
-
-# For 5-minute interval:
+```
+For 5-minute interval:
+```
 OnBootSec=5min
 OnUnitActiveSec=5min
 ```
-
-After changes, reload systemd:
-```bash
-sudo systemctl daemon-reload
-sudo systemctl restart netbird-monitor.timer
+For 30-minute interval:
 ```
+OnBootSec=30min
+OnUnitActiveSec=30min
+```
+### Apply Configuration Changes
+
+After making any changes, reload systemd and restart the timer:
+```bash
+# Reload systemd configuration
+sudo systemctl daemon-reload
+
+# Restart the timer to apply new interval
+sudo systemctl restart netbird-monitor.timer
+
+# Verify timer status
+sudo systemctl status netbird-monitor.timer
+
+# Check next scheduled run
+sudo systemctl list-timers netbird-monitor.timer
+```
+
+
 
 ## Usage
 ### Check Service Status
@@ -127,6 +157,20 @@ sudo /usr/local/bin/netbird-monitor.sh
 
 # Check NetBird status
 netbird status
+```
+
+### Service Control
+
+The monitor only runs when the NetBird service is enabled. To control monitoring:
+```bash
+# Enable NetBird service (enables monitoring)
+sudo systemctl enable netbird
+
+# Disable NetBird service (disables monitoring)
+sudo systemctl disable netbird
+
+# Check if monitoring will run
+systemctl is-enabled netbird &amp;&amp; echo &quot;Monitoring active&quot; || echo &quot;Monitoring disabled&quot;
 ```
 
 ### Service Management
