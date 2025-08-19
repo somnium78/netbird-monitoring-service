@@ -7,12 +7,19 @@ NETBIRD_BIN="/usr/bin/netbird"
 MIN_PEERS=${MIN_PEERS:-3}
 LOG_FILE="/var/log/netbird-monitor.log"
 STATUS_TIMEOUT=10
+DEBUG=${DEBUG:-false}
 
 # Logging-Funktion
 log() {
     local level="$1"
     local message="$2"
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+
+    # DEBUG nur wenn aktiviert
+    if [[ "$level" == "DEBUG" && "$DEBUG" != "true" ]]; then
+        return
+    fi
+
     echo "$timestamp - $level: $message" | tee -a "$LOG_FILE"
     logger -t netbird-monitor "$level: $message"
 }
@@ -38,7 +45,7 @@ get_netbird_status() {
         log "DEBUG" "NetBird status command failed (exit code: $exit_code)"
         return 1
     fi
-        
+
     echo "$status_output"
     return 0
 }
@@ -51,29 +58,25 @@ parse_peer_count() {
 
     # Verschiedene Ausgabeformate prüfen
     if echo "$status_output" | grep -q "Peers count:"; then
-        # Format: "Peers count: 7/8"
         local peer_line=$(echo "$status_output" | grep "Peers count:" | head -1)
         if [[ $peer_line =~ ([0-9]+)/([0-9]+) ]]; then
             connected_peers=${BASH_REMATCH[1]}
             total_peers=${BASH_REMATCH[2]}
         fi
     elif echo "$status_output" | grep -q "Connected peers:"; then
-        # Format: "Connected peers: 7/8"
         local peer_line=$(echo "$status_output" | grep "Connected peers:" | head -1)
         if [[ $peer_line =~ ([0-9]+)/([0-9]+) ]]; then
             connected_peers=${BASH_REMATCH[1]}
             total_peers=${BASH_REMATCH[2]}
         fi
     elif echo "$status_output" | grep -qE "[0-9]+/[0-9]+"; then
-        # Fallback: Nach Zahlen-Pattern suchen
         local numbers=$(echo "$status_output" | grep -oE "[0-9]+/[0-9]+" | head -1)
         if [[ $numbers =~ ([0-9]+)/([0-9]+) ]]; then
             connected_peers=${BASH_REMATCH[1]}
             total_peers=${BASH_REMATCH[2]}
         fi
     fi
-        
-    # Validierung
+
     if [[ $connected_peers -eq 0 && $total_peers -eq 0 ]]; then
         return 1
     fi
@@ -82,84 +85,74 @@ parse_peer_count() {
     return 0
 }
 
-# NetBird up ausführen
-netbird_up() {
-    log "INFO" "Executing 'netbird up'..."
+# NetBird reconnect (down + up)
+netbird_reconnect() {
+    log "WARNING" "Reconnecting NetBird..."
 
-    if "$NETBIRD_BIN" up 2>&1 | tee -a "$LOG_FILE"; then
-        log "INFO" "NetBird up command completed"
+    # Erst down (Output unterdrücken außer bei Fehlern)
+    if ! "$NETBIRD_BIN" down >/dev/null 2>&1; then
+        log "WARNING" "NetBird down failed, continuing with up..."
+    fi
+
+    # Dann up (Output unterdrücken außer bei Fehlern)
+    if "$NETBIRD_BIN" up >/dev/null 2>&1; then
+        log "INFO" "NetBird reconnected successfully"
         return 0
     else
-        log "ERROR" "NetBird up command failed"
+        log "ERROR" "NetBird reconnect failed"
         return 1
     fi
 }
 
 # Hauptfunktion
 main() {
-    log "INFO" "NetBird monitor started"
-        
     # Prüfen ob NetBird-Service enabled ist
     if ! is_netbird_enabled; then
-        log "INFO" "NetBird service is disabled - monitoring skipped"
-        log "INFO" "NetBird monitor finished"
+        log "DEBUG" "NetBird service is disabled - monitoring skipped"
         exit 0
     fi
-        
-    log "DEBUG" "NetBird service is enabled - proceeding with monitoring"
 
     # NetBird-Status abrufen
     local status_output
     if ! status_output=$(get_netbird_status); then
-        log "WARNING" "Cannot get NetBird status - NetBird appears to be down"
+        log "WARNING" "Cannot get NetBird status - attempting reconnect"
 
-        # NetBird up versuchen
-        if netbird_up; then
-            log "INFO" "NetBird up executed successfully"
-        else
-            log "ERROR" "NetBird up failed"
+        if netbird_reconnect; then
+            log "DEBUG" "NetBird reconnect completed"
         fi
 
-        log "INFO" "NetBird monitor finished"
         exit 0
     fi
 
     # Peer-Count extrahieren
     local peer_info
     if ! peer_info=$(parse_peer_count "$status_output"); then
-        log "ERROR" "Could not find peers count in status output"
+        log "ERROR" "Could not parse peer count from status output"
         log "DEBUG" "Status output was: $status_output"
 
-        # NetBird up versuchen
-        if netbird_up; then
-            log "INFO" "NetBird up executed due to parsing error"
+        if netbird_reconnect; then
+            log "DEBUG" "NetBird reconnect completed due to parsing error"
         fi
 
-        log "INFO" "NetBird monitor finished"
         exit 0
     fi
-    
+
     # Peer-Zahlen aufteilen
     local connected_peers total_peers
     IFS='/' read -r connected_peers total_peers <<< "$peer_info"
 
+    # Immer loggen: Peer-Status
     log "INFO" "Connected peers: $connected_peers/$total_peers"
 
     # Peer-Count prüfen
     if [[ $connected_peers -lt $MIN_PEERS ]]; then
-        log "WARNING" "Only $connected_peers peers connected (minimum: $MIN_PEERS). Executing 'netbird up'..."
+        log "WARNING" "Only $connected_peers peers connected (minimum: $MIN_PEERS) - reconnecting"
 
-        if netbird_up; then
-            log "INFO" "NetBird up executed successfully"
-        else
-            log "ERROR" "NetBird up failed"
+        if netbird_reconnect; then
+            log "DEBUG" "NetBird reconnect completed successfully"
         fi
-    else
-        log "INFO" "NetBird status OK ($connected_peers/$total_peers peers)"
     fi
-        
-    log "INFO" "NetBird monitor finished"
-}       
-    
+}
+
 # Script ausführen
 main "$@"

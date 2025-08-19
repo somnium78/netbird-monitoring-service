@@ -27,7 +27,7 @@ The NetBird Connection Monitor continuously monitors the number of connected pee
 ### Option 1: Debian Package (Recommended)
 ```bash
 # Install package
-sudo dpkg -i netbird-monitor_1.0-2_all.deb
+sudo dpkg -i netbird-monitor_1.0-3_all.deb
 
 # Fix missing dependencies if needed
 sudo apt-get install -f
@@ -335,3 +335,6 @@ Note: This is an unofficial monitoring script and is not affiliated with or endo
 - Debian package support
 - Logrotate integration
 
+### Version 1.0-3
+- Optimized logging
+- Better error handling
