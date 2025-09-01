@@ -1,0 +1,123 @@
+name: Build Multi-Platform Packages
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y dpkg-dev
+      - name: Build DEB package
+        run: chmod +x build-deb.sh && ./build-deb.sh
+      - name: Upload DEB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-package
+          path: "*.deb"
+
+  build-rpm-el8:
+    runs-on: ubuntu-latest
+    container: rockylinux:8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: dnf install -y rpm-build rpmdevtools systemd
+      - name: Setup RPM build environment
+        run: |
+          rpmdev-setuptree
+          cp rpm/netbird-monitoring-service.spec ~/rpmbuild/SPECS/
+      - name: Create source tarball with correct structure
+        run: |
+          VERSION=$(cat VERSION)
+          mkdir -p /tmp/netbird-monitoring-service-${VERSION}
+          cp -r * /tmp/netbird-monitoring-service-${VERSION}/
+          cd /tmp
+          tar --exclude='.git' --exclude='build' \
+              -czf ~/rpmbuild/SOURCES/netbird-monitoring-service-${VERSION}.tar.gz \
+              netbird-monitoring-service-${VERSION}
+      - name: Build RPM package
+        run: |
+          rpmbuild -ba ~/rpmbuild/SPECS/netbird-monitoring-service.spec
+          cp ~/rpmbuild/RPMS/noarch/*.rpm ./
+          for rpm in *.rpm; do
+            mv "$rpm" "${rpm%.rpm}-el8.rpm"
+          done
+      - name: Upload RPM EL8 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-el8-package
+          path: "*-el8.rpm"
+
+  build-rpm-el9:
+    runs-on: ubuntu-latest
+    container: rockylinux:9
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: dnf install -y rpm-build rpmdevtools systemd
+      - name: Setup RPM build environment
+        run: |
+          rpmdev-setuptree
+          cp rpm/netbird-monitoring-service.spec ~/rpmbuild/SPECS/
+      - name: Create source tarball with correct structure
+        run: |
+          VERSION=$(cat VERSION)
+          mkdir -p /tmp/netbird-monitoring-service-${VERSION}
+          cp -r * /tmp/netbird-monitoring-service-${VERSION}/
+          cd /tmp
+          tar --exclude='.git' --exclude='build' \
+              -czf ~/rpmbuild/SOURCES/netbird-monitoring-service-${VERSION}.tar.gz \
+              netbird-monitoring-service-${VERSION}
+      - name: Build RPM package
+        run: |
+          rpmbuild -ba ~/rpmbuild/SPECS/netbird-monitoring-service.spec
+          cp ~/rpmbuild/RPMS/noarch/*.rpm ./
+          for rpm in *.rpm; do
+            mv "$rpm" "${rpm%.rpm}-el9.rpm"
+          done
+      - name: Upload RPM EL9 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-el9-package
+          path: "*-el9.rpm"
+
+  create-release:
+    needs: [build-deb, build-rpm-el8, build-rpm-el9]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          path: ./packages/
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            packages/**/*.deb
+            packages/**/*.rpm
+          name: "Release ${{ github.ref_name }}"
+          body: |
+            ## NetBird Monitoring Service
+
+            **Debian/Ubuntu:** netbird-monitoring-service_*_all.deb
+            **RHEL8/Rocky8:** netbird-monitoring-service-*-el8.rpm
+            **RHEL9/Rocky9:** netbird-monitoring-service-*-el9.rpm
+
+            **Installation:**
+            - Debian: `sudo dpkg -i netbird-monitoring-service_*.deb`
+            - RHEL: `sudo rpm -i netbird-monitoring-service-*.rpm`
+
+            See CHANGELOG.md for details.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
