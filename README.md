@@ -1,85 +1,89 @@
-# NetBird Connection Monitor
+# NetBird Monitoring Service
 
-A systemd-based service for automatic monitoring and restoration of NetBird connections.
+A systemd-based monitoring service for NetBird VPN connections with automated alerting and logging.
 
 ## Description
 
-The NetBird Connection Monitor continuously monitors the number of connected peers in a NetBird network. When the number of connected peers falls below a configured threshold, NetBird is automatically restarted to restore connections.
+The NetBird Monitoring Service provides continuous monitoring of NetBird VPN connections using a systemd timer. It checks connection status, peer availability, and network health, providing alerts and detailed logging for network administrators.
 
 ## Features
 
-- ✅ Automatic monitoring of NetBird peer connections
-- ✅ Configurable threshold for minimum peer count
-- ✅ Systemd timer for regular checks (default every 15 minutes)
-- ✅ Comprehensive logging with automatic log rotation
-- ✅ Debian package for easy installation
-- ✅ Fully configurable
+- ✅ Automated NetBird connection monitoring via systemd timer
+- ✅ NetBird API integration for real-time status checks
+- ✅ Configurable monitoring intervals and thresholds
+- ✅ Comprehensive logging with log rotation
+- ✅ Alert notifications (webhook/email support)
+- ✅ Automated package builds for Debian and RHEL/CentOS
+- ✅ GitHub Actions CI/CD pipeline
+- ✅ Easy configuration management
+- ✅ Automatic upgrade from old netbird-monitor package
 
 ## Prerequisites
 
-- Debian/Ubuntu-based system
-- NetBird already installed and configured
-- Systemd
+- Linux system with systemd
+- NetBird client installed and configured
+- NetBird API access token (optional for advanced features)
+- curl installed
 - Root privileges for installation
 
 ## Installation
 
-### Option 1: Debian Package (Recommended)
-```bash
-# Install package
-sudo dpkg -i netbird-monitor_1.0-3_all.deb
+### Package Installation (Recommended)
 
-# Fix missing dependencies if needed
-sudo apt-get install -f
-```
+Download the latest release packages from GitHub:
 
-### Option 2: Manual Installation
-```bash
-# Clone repository
-git clone https://github.com/username/netbird-monitor.git
-cd netbird-monitor
+**Debian/Ubuntu:**
+- Download: netbird-monitoring-service_*_all.deb
+- Install: sudo dpkg -i netbird-monitoring-service_*.deb
 
-# Run installation script
-sudo ./install.sh
-```
+**RHEL8/Rocky8:**
+- Download: netbird-monitoring-service-*-el8.rpm
+- Install: sudo rpm -i netbird-monitoring-service-*-el8.rpm
 
-## Files and Components
-### Monitor Script
-```bash
-/usr/local/bin/netbird-monitor.sh
-```
+**RHEL9/Rocky9:**
+- Download: netbird-monitoring-service-*-el9.rpm
+- Install: sudo rpm -i netbird-monitoring-service-*-el9.rpm
 
-### Systemd Services
-```bash
-/etc/systemd/system/netbird-monitor.service
-/etc/systemd/system/netbird-monitor.timer
-```
+### Automatic Upgrade from Old Package
 
-### Logrotate Configuration
-```bash
-/etc/logrotate.d/netbird-monitor
-```
+If you have the old netbird-monitor package installed, the new package will automatically replace it:
+- Old package: netbird-monitor (version 1.0-3 and below)
+- New package: netbird-monitoring-service (version 1.1.0+)
+- Configuration and functionality remain compatible
+- No manual intervention required
 
-### Log File
-```bash
-/var/log/netbird-monitor.log
-```
+### Manual Installation
 
+Clone repository:
+- git clone https://github.com/somnium78/netbird-monitoring-service.git
+- cd netbird-monitoring-service
+
+Run installation script:
+- sudo ./scripts/install.sh
 
 ## Configuration
-### Adjust Threshold
 
-You can configure the minimum peer threshold using environment variables in the systemd service:
+Edit the configuration file:
+- sudo nano /etc/netbird/monitor.conf
 
-```bash
-# Edit the service configuration
-sudo systemctl edit netbird-monitor.service
+Example configuration:
+- NETBIRD_API_URL="https://api.netbird.io"
+- NETBIRD_API_TOKEN="your_api_token_here"
+- CHECK_INTERVAL=300
+- LOG_LEVEL="INFO"
+- ALERT_THRESHOLD=5
+- WEBHOOK_URL=""
+- EMAIL_RECIPIENT=""
 
-# Add or modify the environment variables:
-[Service]
-Environment=&quot;MIN_PEERS=5&quot;
-Environment=&quot;STATUS_TIMEOUT=15&quot;
-```
+### Environment Variables (Alternative Configuration)
+
+You can also configure the service using systemd environment variables:
+- sudo systemctl edit netbird-monitor.service
+
+Add environment variables:
+- [Service]
+- Environment="MIN_PEERS=3"
+- Environment="STATUS_TIMEOUT=10"
 
 Available environment variables:
 - MIN_PEERS: Minimum number of connected peers (default: 3)
@@ -88,230 +92,213 @@ Available environment variables:
 ### Adjust Check Interval
 
 Edit the systemd timer to change monitoring frequency:
-```bash
-sudo nano /etc/systemd/system/netbird-monitor.timer
-```
-For 15-minute interval (default):
-```
-OnBootSec=15min
-OnUnitActiveSec=15min
-```
-For 5-minute interval:
-```
-OnBootSec=5min
-OnUnitActiveSec=5min
-```
-For 30-minute interval:
-```
-OnBootSec=30min
-OnUnitActiveSec=30min
-```
-### Apply Configuration Changes
+- sudo nano /etc/systemd/system/netbird-monitor.timer
 
-After making any changes, reload systemd and restart the timer:
-```bash
-# Reload systemd configuration
-sudo systemctl daemon-reload
+For different intervals:
+- 5 minutes: OnBootSec=5min, OnUnitActiveSec=5min
+- 15 minutes (default): OnBootSec=15min, OnUnitActiveSec=15min
+- 30 minutes: OnBootSec=30min, OnUnitActiveSec=30min
 
-# Restart the timer to apply new interval
-sudo systemctl restart netbird-monitor.timer
-
-# Verify timer status
-sudo systemctl status netbird-monitor.timer
-
-# Check next scheduled run
-sudo systemctl list-timers netbird-monitor.timer
-```
-
-
+Apply configuration changes:
+- sudo systemctl daemon-reload
+- sudo systemctl restart netbird-monitor.timer
 
 ## Usage
-### Check Service Status
-```bash
-# Timer status
-systemctl status netbird-monitor.timer
 
-# Service status
-systemctl status netbird-monitor.service
+### Service Management
 
-# Show recent executions
-journalctl -u netbird-monitor.service -n 20
-```
+Check timer status:
+- systemctl status netbird-monitor.timer
 
-### View Logs
-```bash
-# Follow live log
-tail -f /var/log/netbird-monitor.log
+Check service status:
+- systemctl status netbird-monitor.service
 
-# Show last 50 lines
-tail -n 50 /var/log/netbird-monitor.log
+View logs:
+- journalctl -u netbird-monitor.service -f
+- tail -f /var/log/netbird/monitor.log
 
-# List log files
-ls -la /var/log/netbird-monitor*
-```
+Manual monitoring run:
+- sudo /usr/local/bin/netbird-monitor.sh
 
-### Manual Test
-```bash
-# Run script manually
-sudo /usr/local/bin/netbird-monitor.sh
-
-# Check NetBird status
-netbird status
-```
+Run test suite:
+- sudo ./scripts/test.sh
 
 ### Service Control
 
-The monitor only runs when the NetBird service is enabled. To control monitoring:
-```bash
-# Enable NetBird service (enables monitoring)
-sudo systemctl enable netbird
+Start/stop timer:
+- sudo systemctl start netbird-monitor.timer
+- sudo systemctl stop netbird-monitor.timer
 
-# Disable NetBird service (disables monitoring)
-sudo systemctl disable netbird
+Enable/disable autostart:
+- sudo systemctl enable netbird-monitor.timer
+- sudo systemctl disable netbird-monitor.timer
 
-# Check if monitoring will run
-systemctl is-enabled netbird &amp;&amp; echo &quot;Monitoring active&quot; || echo &quot;Monitoring disabled&quot;
-```
+Check next scheduled run:
+- sudo systemctl list-timers netbird-monitor.timer
 
-### Service Management
-```bash
-# Start timer
-sudo systemctl start netbird-monitor.timer
+## How It Works
 
-# Stop timer
-sudo systemctl stop netbird-monitor.timer
-
-# Enable timer (autostart)
-sudo systemctl enable netbird-monitor.timer
-
-# Disable timer
-sudo systemctl disable netbird-monitor.timer
-```
+1. **Timer:** systemd timer runs monitoring checks at configured intervals
+2. **Status Check:** Queries NetBird status for connection information
+3. **Peer Count:** Monitors number of connected peers against threshold
+4. **Auto-Restart:** Restarts NetBird service when peer count is too low
+5. **Logging:** Comprehensive logging with automatic rotation
+6. **Conditional Monitoring:** Only runs when NetBird service is enabled
 
 ## Log Format
-The system logs all activities in the following format:
 
-```
-2025-08-17 10:30:15 - INFO: NetBird monitor started
-2025-08-17 10:30:15 - INFO: Connected peers: 5/8
-2025-08-17 10:30:15 - INFO: NetBird status OK (5/8 peers)
-2025-08-17 10:30:15 - INFO: NetBird monitor finished
-```
+The system logs all activities with timestamps:
+
+Normal operation:
+- 2025-09-01 10:30:15 - INFO: NetBird monitor started
+- 2025-09-01 10:30:15 - INFO: Connected peers: 5/8
+- 2025-09-01 10:30:15 - INFO: NetBird status OK (5/8 peers)
 
 When issues occur:
-```
-2025-08-17 10:35:15 - WARNING: Only 2 peers connected (minimum: 3). Restarting NetBird...
-2025-08-17 10:35:18 - INFO: NetBird successfully restarted
-```
+- 2025-09-01 10:35:15 - WARNING: Only 2 peers connected (minimum: 3). Restarting NetBird...
+- 2025-09-01 10:35:18 - INFO: NetBird successfully restarted
+
+## Files and Components
+
+### Scripts and Binaries
+- /usr/local/bin/netbird-monitor.sh - Main monitoring script
+
+### Systemd Services
+- /etc/systemd/system/netbird-monitor.service - Service definition
+- /etc/systemd/system/netbird-monitor.timer - Timer configuration
+
+### Configuration
+- /etc/netbird/monitor.conf - Main configuration file
+
+### Logging
+- /var/log/netbird/monitor.log - Main log file
+- /etc/logrotate.d/netbird-monitor - Log rotation configuration
+
+## Security Notes
+
+### Configuration File Security
+
+Set correct permissions for configuration file:
+- sudo chmod 600 /etc/netbird/monitor.conf
+- sudo chown root:root /etc/netbird/monitor.conf
+
+### Best Practices
+
+- Never commit API tokens to repositories
+- Use restricted API tokens with minimal required permissions
+- Rotate API tokens regularly
+- Use HTTPS for all API connections
+- Monitor log files for security events
 
 ## Troubleshooting
+
 ### Common Issues
-#### Timer not running
-```bash
-# Check timer status
-systemctl status netbird-monitor.timer
 
-# Start timer manually
-sudo systemctl start netbird-monitor.timer
-```
+**Timer not running:**
+- systemctl status netbird-monitor.timer
+- sudo systemctl start netbird-monitor.timer
 
-#### Script errors
-```bash
-# Check script permissions
-ls -la /usr/local/bin/netbird-monitor.sh
+**Script errors:**
+- ls -la /usr/local/bin/netbird-monitor.sh
+- sudo chmod +x /usr/local/bin/netbird-monitor.sh
 
-# Set permissions
-sudo chmod +x /usr/local/bin/netbird-monitor.sh
-```
+**NetBird command not found:**
+- which netbird
+- netbird version
 
-#### NetBird command not found
-```bash
-# Check NetBird installation
-which netbird
-netbird version
-
-# Check PATH
-echo $PATH
-```
-
-#### Log file not writable
-```bash
-# Check log file permissions
-ls -la /var/log/netbird-monitor.log
-
-# Fix permissions
-sudo touch /var/log/netbird-monitor.log
-sudo chmod 644 /var/log/netbird-monitor.log
-```
+**Log file not writable:**
+- sudo mkdir -p /var/log/netbird
+- sudo chmod 755 /var/log/netbird
 
 ### Debug Mode
-For detailed troubleshooting, run the script with debug output:
 
-```bash
-# Run script with debug output
-sudo bash -x /usr/local/bin/netbird-monitor.sh
-```
+Run with debug output:
+- sudo bash -x /usr/local/bin/netbird-monitor.sh
+- sudo DEBUG=1 /usr/local/bin/netbird-monitor.sh
 
 ### Test Logrotate
-```bash
-# Test logrotate configuration
-sudo logrotate -d /etc/logrotate.d/netbird-monitor
 
-# Manual rotation
-sudo logrotate -f /etc/logrotate.d/netbird-monitor
-```
+Test logrotate configuration:
+- sudo logrotate -d /etc/logrotate.d/netbird-monitor
+- sudo logrotate -f /etc/logrotate.d/netbird-monitor
+
+## Development and Building
+
+### Building Packages Locally
+
+Build Debian package:
+- chmod +x build-deb.sh && ./build-deb.sh
+
+### Automated Builds
+
+The project uses GitHub Actions for automated package building:
+- **Triggers:** Git tags starting with 'v' (e.g., v1.1.0)
+- **Outputs:** .deb and .rpm packages for multiple distributions
+- **Releases:** Automatic GitHub releases with attached packages
+
+Create a new release:
+1. Update VERSION file
+2. Commit changes: git commit -m "Release version X.Y.Z"
+3. Create tag: git tag -a vX.Y.Z -m "Release version X.Y.Z"
+4. Push: git push origin main && git push origin vX.Y.Z
 
 ## Uninstallation
-### Remove Debian Package
-```bash
-sudo dpkg -r netbird-monitor
-```
+
+### Package Uninstallation
+
+**Debian/Ubuntu:**
+- sudo apt remove netbird-monitoring-service
+
+**RHEL/CentOS:**
+- sudo rpm -e netbird-monitoring-service
 
 ### Manual Uninstallation
-```bash
-# Stop and disable services
-sudo systemctl stop netbird-monitor.timer
-sudo systemctl disable netbird-monitor.timer
 
-# Remove files
-sudo rm /usr/local/bin/netbird-monitor.sh
-sudo rm /etc/systemd/system/netbird-monitor.service
-sudo rm /etc/systemd/system/netbird-monitor.timer
-sudo rm /etc/logrotate.d/netbird-monitor
+1. Stop and disable services:
+   - sudo systemctl stop netbird-monitor.timer
+   - sudo systemctl disable netbird-monitor.timer
+   - sudo systemctl stop netbird-monitor.service
 
-# Reload systemd
-sudo systemctl daemon-reload
+2. Remove files:
+   - sudo rm /usr/local/bin/netbird-monitor.sh
+   - sudo rm /etc/systemd/system/netbird-monitor.service
+   - sudo rm /etc/systemd/system/netbird-monitor.timer
+   - sudo rm /etc/logrotate.d/netbird-monitor
+   - sudo rm -rf /etc/netbird/
+   - sudo rm -rf /var/log/netbird/
 
-# Optional: Remove log files
-sudo rm /var/log/netbird-monitor*
-```
+3. Reload systemd:
+   - sudo systemctl daemon-reload
 
-## Development
-### Building Package
-```bash
-# Prepare package structure
-mkdir -p netbird-monitor-1.0/{DEBIAN,usr/local/bin,etc/systemd/system,etc/logrotate.d}
+## Changelog
 
-# Copy files
-cp netbird-monitor.sh netbird-monitor-1.0/usr/local/bin/
-cp netbird-monitor.service netbird-monitor-1.0/etc/systemd/system/
-cp netbird-monitor.timer netbird-monitor-1.0/etc/systemd/system/
-cp netbird-monitor.logrotate netbird-monitor-1.0/etc/logrotate.d/netbird-monitor
+See CHANGELOG.md for detailed version history and changes.
 
-# Build Debian package
-dpkg-deb --build netbird-monitor-1.0
-```
+### Version 1.1.0
+- Restructured repository with automated builds
+- Added package replacement for netbird-monitor
+- Multi-platform support (Debian + RHEL/CentOS)
+- GitHub Actions CI/CD integration
+- Improved configuration management
+
+### Version 1.0-3 (Legacy)
+- Manual DEB package structure
+- Basic NetBird monitoring functionality
 
 ## Contributing
+
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
+
 This project is licensed under the GNU General Public License v3.0 - see the LICENSE file for details.
 
-## Why GPL v3?
+### Why GPL v3?
+
 This project uses GPL v3 to ensure that any improvements or modifications to this monitoring script remain open source and benefit the entire community. This aligns with the open source philosophy of NetBird and promotes collaborative development.
 
 ## Disclaimer
+
 **DISCLAIMER OF WARRANTY AND LIMITATION OF LIABILITY**
 
 This software is provided "as is" without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
@@ -319,22 +306,11 @@ This software is provided "as is" without warranty of any kind, express or impli
 Use this software at your own risk. The authors are not responsible for any damage or data loss that may occur from using this software.
 
 ## Support
-For issues and questions:
 
+For issues and questions:
 - Create an issue on GitHub
-- Check the NetBird documentation: https://docs.netbird.io/
+- Check NetBird documentation: https://docs.netbird.io/
 - Visit the NetBird community: https://github.com/netbirdio/netbird
 
-Note: This is an unofficial monitoring script and is not affiliated with or endorsed by NetBird.
+Note: This is an unofficial monitoring service and is not affiliated with or endorsed by NetBird.
 
-## Changelog
-### Version 1.0
-- Initial release
-- Basic NetBird monitoring
-- Systemd timer integration
-- Debian package support
-- Logrotate integration
-
-### Version 1.0-3
-- Optimized logging
-- Better error handling
