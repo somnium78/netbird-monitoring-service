@@ -37,7 +37,7 @@ cp src/netbird-monitor.conf.example "$DEB_DIR/etc/netbird/monitor.conf"
 # Make script executable
 chmod +x "$DEB_DIR/usr/local/bin/netbird-monitor.sh"
 
-# Create control file
+# Create control file with package replacement
 cat > "$DEB_DIR/DEBIAN/control" << CONTROL_EOF
 Package: $PACKAGE_NAME
 Version: $VERSION
@@ -45,10 +45,15 @@ Section: admin
 Priority: optional
 Architecture: $ARCH
 Depends: systemd, bash, curl
+Replaces: netbird-monitor (<< 1.1.0)
+Conflicts: netbird-monitor (<< 1.1.0)
+Provides: netbird-monitor
 Maintainer: somnium78 <user@example.com>
 Description: NetBird Monitoring Service
  A systemd service and timer for monitoring NetBird VPN connections.
  Provides automated monitoring and alerting for NetBird network status.
+ .
+ This package replaces the old netbird-monitor package.
 CONTROL_EOF
 
 # Create postinst script
@@ -69,6 +74,11 @@ systemctl start netbird-monitor.timer
 echo "✅ NetBird Monitoring Service installed"
 echo "Configure /etc/netbird/monitor.conf and check status with:"
 echo "systemctl status netbird-monitor.timer"
+
+# Migration message
+if [ "$1" = "configure" ] && [ -n "$2" ]; then
+    echo "📦 Successfully upgraded from netbird-monitor to netbird-monitoring-service"
+fi
 POSTINST_EOF
 
 # Create prerm script
