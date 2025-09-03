@@ -1,7 +1,11 @@
 # Changelog
 
-## [1.1.0] - 2025-09-01
+## [1.1.1] - 2025-09-03
+### Changed
+- permissions and ownership of logrotate config
 
+
+## [1.1.0] - 2025-09-01
 ### Changed
 - Restructured repository to match modern packaging standards
 - Migrated from manual DEB structure to automated build process
