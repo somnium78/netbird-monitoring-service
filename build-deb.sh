@@ -65,6 +65,10 @@ set -e
 mkdir -p /var/log/netbird
 chown root:root /var/log/netbird
 chmod 755 /var/log/netbird
+if [ -f /etc/logrotate.d/netbird-monitor ]; then
+    chown root:root /etc/logrotate.d/netbird-monitor
+    chmod 644 /etc/logrotate.d/netbird-monitor
+fi
 
 # Reload systemd and enable services
 systemctl daemon-reload
