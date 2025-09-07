@@ -13,21 +13,20 @@ All releases are now available at:
 
 ## 🔧 Clone URL
 
-```bash
-git clone https://git.risse-it.de/public-releases/netbird-monitoring-service.git
-```
+    git clone https://git.risse-it.de/public-releases/netbird-monitoring-service.git
 
 ## ℹ️ Migration Notice
 
 - **Date:** 2025-09-07
 - **Reason:** Moving to self-hosted infrastructure
 - **Status:** This GitHub repository is now archived and read-only
+- **Content:** All original content and releases have been moved to Forgejo
 
 ## 🆘 Support
 
 For issues, questions, or contributions, please visit the new repository:
-**🔗 [https://git.risse-it.de/public-releases/netbird-monitoring-service/issues](https://git.risse-it.de/public-releases/netbird-monitoring-service/issues)**
+**🔗 [Issues](https://git.risse-it.de/public-releases/netbird-monitoring-service/issues)**
 
 ---
 
-*This repository will remain available for historical reference but will not receive updates.*
+*This repository serves only as a redirect. All development happens on Forgejo.*
