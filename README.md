@@ -20,7 +20,7 @@ All releases are now available at:
 - **Date:** 2025-09-07
 - **Reason:** Moving to self-hosted infrastructure
 - **Status:** This GitHub repository is now archived and read-only
-- **Content:** All original content and releases have been moved to Forgejo
+- **Content:** All original content, releases, and tags have been moved to Forgejo
 
 ## 🆘 Support
 
